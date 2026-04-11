@@ -3,7 +3,7 @@ const http = require("http");
 const fetch = require("node-fetch");
 
 const TOKEN = process.env.BOT_TOKEN;
-const GEMINI_KEY = "AIzaSyAfTgon3vad6OR4vW9KHKxfBswioWcbGQ8"; // Direkt yazdım
+const GEMINI_KEY = "process.env.GEMINI_API_KEY"; // Direkt yazdım
 
 // HTTP sunucu
 const PORT = process.env.PORT || 10000;
