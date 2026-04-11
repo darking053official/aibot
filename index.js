@@ -3,7 +3,7 @@ const http = require("http");
 const fetch = require("node-fetch");
 
 const TOKEN = process.env.BOT_TOKEN;
-const GEMINI_KEY = process.env.GEMINI_API_KEY; // Direkt yazdım
+const GEMINI_KEY = process.env.GEMINI_API_KEY; // Yeni tokenini environment variable olarak ekle
 
 // HTTP sunucu
 const PORT = process.env.PORT || 10000;
@@ -20,12 +20,9 @@ const client = new Client({
   ]
 });
 
-// Bot başlangıç zamanı
-const botStartTime = Date.now();
-
-// Gemini AI sorgulama (DÜZELTİLMİŞ)
+// Gemini AI sorgulama - DÜZELTİLDİ
 async function geminiSor(prompt) {
-  // Yeni model adı: gemini-1.5-pro veya gemini-1.5-flash
+  // DOĞRU model adı: gemini-1.5-flash (gemini-pro DEĞİL!)
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
   
   const response = await fetch(url, {
@@ -38,6 +35,7 @@ async function geminiSor(prompt) {
   
   if (!response.ok) {
     const error = await response.text();
+    console.error("API Hatası:", error);
     throw new Error(`API Hatası: ${response.status}`);
   }
   
@@ -59,7 +57,7 @@ client.on("messageCreate", async (message) => {
   const cmd = args.shift().toLowerCase();
   const soru = args.join(" ");
 
-  // ─── YAPAY ZEKA SORU ─────────────────────────────────────────
+  // YAPAY ZEKA SORU
   if (cmd === "ai" || cmd === "sor") {
     if (!soru) {
       return message.reply("❌ **Soru yazmalısın!** `!ai <sorun>`\n📍 by DRK");
@@ -87,7 +85,7 @@ client.on("messageCreate", async (message) => {
     }
   }
 
-  // ─── SOYBOT (KISA CEVAP) ──────────────────────────────────────
+  // SOHBET
   if (cmd === "sohbet" || cmd === "chat") {
     if (!soru) {
       return message.reply("❌ **Bir şey yazmalısın!** `!sohbet <mesaj>`\n📍 by DRK");
@@ -103,116 +101,7 @@ client.on("messageCreate", async (message) => {
     }
   }
 
-  // ─── YORUMLA (METİN ANALİZİ) ──────────────────────────────────
-  if (cmd === "yorumla") {
-    if (!soru) {
-      return message.reply("❌ **Yorumlanacak metin yaz!** `!yorumla <metin>`\n📍 by DRK");
-    }
-    
-    const bekliyor = await message.reply("🔍 **Yorumlanıyor...**");
-    
-    try {
-      const cevap = await geminiSor(`Şu metni kısaca yorumla ve analiz et: "${soru}"`);
-      
-      const embed = new EmbedBuilder()
-        .setTitle("🔍 Metin Yorumlama")
-        .setColor(Colors.Blue)
-        .addFields(
-          { name: "📝 Metin", value: `\`\`\`${soru.slice(0, 500)}\`\`\``, inline: false },
-          { name: "💡 Yorum", value: `\`\`\`${cevap.slice(0, 1000)}\`\`\``, inline: false }
-        )
-        .setFooter({ text: "Gemini AI • by DRK" })
-        .setTimestamp();
-      
-      await bekliyor.edit({ content: null, embeds: [embed] });
-    } catch (error) {
-      await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
-    }
-  }
-
-  // ─── ÖZETLE ───────────────────────────────────────────────────
-  if (cmd === "ozetle") {
-    if (!soru) {
-      return message.reply("❌ **Özetlenecek metin yaz!** `!ozetle <metin>`\n📍 by DRK");
-    }
-    
-    const bekliyor = await message.reply("📄 **Özetleniyor...**");
-    
-    try {
-      const cevap = await geminiSor(`Şu metni 2-3 cümleyle özetle: "${soru}"`);
-      
-      const embed = new EmbedBuilder()
-        .setTitle("📄 Metin Özeti")
-        .setColor(Colors.Green)
-        .addFields(
-          { name: "📝 Orijinal", value: `\`\`\`${soru.slice(0, 300)}\`\`\``, inline: false },
-          { name: "📋 Özet", value: `\`\`\`${cevap.slice(0, 500)}\`\`\``, inline: false }
-        )
-        .setFooter({ text: "Gemini AI • by DRK" })
-        .setTimestamp();
-      
-      await bekliyor.edit({ content: null, embeds: [embed] });
-    } catch (error) {
-      await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
-    }
-  }
-
-  // ─── ÇEVİR ────────────────────────────────────────────────────
-  if (cmd === "cevir") {
-    if (args.length < 2) {
-      return message.reply("❌ **Kullanım:** `!cevir <dil> <metin>`\nÖrnek: `!cevir ingilizce merhaba`\n📍 by DRK");
-    }
-    
-    const dil = args[0];
-    const metin = args.slice(1).join(" ");
-    
-    const bekliyor = await message.reply(`🌐 **${dil} diline çevriliyor...**`);
-    
-    try {
-      const cevap = await geminiSor(`"${metin}" metnini ${dil} diline çevir. Sadece çeviriyi yaz.`);
-      
-      const embed = new EmbedBuilder()
-        .setTitle("🌐 Çeviri")
-        .setColor(Colors.Aqua)
-        .addFields(
-          { name: "📝 Orijinal", value: `\`\`\`${metin}\`\`\``, inline: false },
-          { name: `🗣️ ${dil.toUpperCase()}`, value: `\`\`\`${cevap.slice(0, 500)}\`\`\``, inline: false }
-        )
-        .setFooter({ text: "Gemini AI • by DRK" })
-        .setTimestamp();
-      
-      await bekliyor.edit({ content: null, embeds: [embed] });
-    } catch (error) {
-      await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
-    }
-  }
-
-  // ─── FİKİR ÜRET ───────────────────────────────────────────────
-  if (cmd === "fikir") {
-    if (!soru) {
-      return message.reply("❌ **Konu yaz!** `!fikir <konu>`\nÖrnek: `!fikir yapay zeka`\n📍 by DRK");
-    }
-    
-    const bekliyor = await message.reply("💡 **Fikir üretiliyor...**");
-    
-    try {
-      const cevap = await geminiSor(`${soru} hakkında 5 yaratıcı fikir üret. Madde madde yaz.`);
-      
-      const embed = new EmbedBuilder()
-        .setTitle("💡 Fikir Üretici")
-        .setDescription(`**Konu:** ${soru}`)
-        .setColor(Colors.Gold)
-        .addFields({ name: "📋 Fikirler", value: `\`\`\`${cevap.slice(0, 1000)}\`\`\``, inline: false })
-        .setFooter({ text: "Gemini AI • by DRK" })
-        .setTimestamp();
-      
-      await bekliyor.edit({ content: null, embeds: [embed] });
-    } catch (error) {
-      await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
-    }
-  }
-
-  // ─── YARDIM ────────────────────────────────────────────────────
+  // YARDIM
   if (cmd === "aiyardim" || cmd === "aihelp") {
     const embed = new EmbedBuilder()
       .setTitle("🤖 AI Bot Komutları")
