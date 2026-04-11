@@ -23,7 +23,7 @@ const client = new Client({
 // GÜNCEL Gemini sorgulama (gemini-2.0-flash ile)
 async function geminiSor(prompt) {
   // ÇALIŞAN model - gemini-2.0-flash
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`;
   
   const response = await fetch(url, {
     method: "POST",
