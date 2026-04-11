@@ -3,12 +3,7 @@ const http = require("http");
 const fetch = require("node-fetch");
 
 const TOKEN = process.env.BOT_TOKEN;
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
-
-if (!TOKEN || !GEMINI_KEY) {
-  console.error("❌ BOT_TOKEN veya GEMINI_API_KEY bulunamadı!");
-  process.exit(1);
-}
+const GEMINI_KEY = "AIzaSyAfTgon3vad6OR4vW9KHKxfBswioWcbGQ8"; // Direkt yazdım
 
 // HTTP sunucu
 const PORT = process.env.PORT || 10000;
@@ -28,9 +23,10 @@ const client = new Client({
 // Bot başlangıç zamanı
 const botStartTime = Date.now();
 
-// Gemini AI sorgulama
+// Gemini AI sorgulama (DÜZELTİLMİŞ)
 async function geminiSor(prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_KEY}`;
+  // Yeni model adı: gemini-1.5-pro veya gemini-1.5-flash
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
   
   const response = await fetch(url, {
     method: "POST",
@@ -42,7 +38,7 @@ async function geminiSor(prompt) {
   
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`API Hatası: ${response.status} - ${error}`);
+    throw new Error(`API Hatası: ${response.status}`);
   }
   
   const data = await response.json();
@@ -81,7 +77,7 @@ client.on("messageCreate", async (message) => {
           { name: "❓ Soru", value: `\`\`\`${soru.slice(0, 500)}\`\`\``, inline: false },
           { name: "💬 Cevap", value: `\`\`\`${cevap.slice(0, 1500)}\`\`\``, inline: false }
         )
-        .setFooter({ text: "Gemini Pro AI • by DRK" })
+        .setFooter({ text: "Gemini AI • by DRK" })
         .setTimestamp();
       
       await bekliyor.edit({ content: null, embeds: [embed] });
@@ -125,7 +121,7 @@ client.on("messageCreate", async (message) => {
           { name: "📝 Metin", value: `\`\`\`${soru.slice(0, 500)}\`\`\``, inline: false },
           { name: "💡 Yorum", value: `\`\`\`${cevap.slice(0, 1000)}\`\`\``, inline: false }
         )
-        .setFooter({ text: "Gemini Pro AI • by DRK" })
+        .setFooter({ text: "Gemini AI • by DRK" })
         .setTimestamp();
       
       await bekliyor.edit({ content: null, embeds: [embed] });
@@ -152,7 +148,7 @@ client.on("messageCreate", async (message) => {
           { name: "📝 Orijinal", value: `\`\`\`${soru.slice(0, 300)}\`\`\``, inline: false },
           { name: "📋 Özet", value: `\`\`\`${cevap.slice(0, 500)}\`\`\``, inline: false }
         )
-        .setFooter({ text: "Gemini Pro AI • by DRK" })
+        .setFooter({ text: "Gemini AI • by DRK" })
         .setTimestamp();
       
       await bekliyor.edit({ content: null, embeds: [embed] });
@@ -182,7 +178,7 @@ client.on("messageCreate", async (message) => {
           { name: "📝 Orijinal", value: `\`\`\`${metin}\`\`\``, inline: false },
           { name: `🗣️ ${dil.toUpperCase()}`, value: `\`\`\`${cevap.slice(0, 500)}\`\`\``, inline: false }
         )
-        .setFooter({ text: "Gemini Pro AI • by DRK" })
+        .setFooter({ text: "Gemini AI • by DRK" })
         .setTimestamp();
       
       await bekliyor.edit({ content: null, embeds: [embed] });
@@ -207,7 +203,7 @@ client.on("messageCreate", async (message) => {
         .setDescription(`**Konu:** ${soru}`)
         .setColor(Colors.Gold)
         .addFields({ name: "📋 Fikirler", value: `\`\`\`${cevap.slice(0, 1000)}\`\`\``, inline: false })
-        .setFooter({ text: "Gemini Pro AI • by DRK" })
+        .setFooter({ text: "Gemini AI • by DRK" })
         .setTimestamp();
       
       await bekliyor.edit({ content: null, embeds: [embed] });
@@ -220,7 +216,7 @@ client.on("messageCreate", async (message) => {
   if (cmd === "aiyardim" || cmd === "aihelp") {
     const embed = new EmbedBuilder()
       .setTitle("🤖 AI Bot Komutları")
-      .setDescription("Gemini Pro AI ile güçlendirilmiş yapay zeka botu")
+      .setDescription("Gemini AI ile güçlendirilmiş yapay zeka botu")
       .setColor(Colors.Purple)
       .addFields(
         { name: "❓ !ai <soru>", value: "Yapay zekaya soru sor", inline: true },
@@ -230,7 +226,7 @@ client.on("messageCreate", async (message) => {
         { name: "🌐 !cevir <dil> <metin>", value: "Metni çevir", inline: true },
         { name: "💡 !fikir <konu>", value: "Fikir üret", inline: true }
       )
-      .setFooter({ text: "AI Bot • Gemini Pro • by DRK" })
+      .setFooter({ text: "AI Bot • Gemini AI • by DRK" })
       .setTimestamp();
     
     await message.reply({ embeds: [embed] });
