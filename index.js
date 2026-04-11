@@ -3,7 +3,7 @@ const http = require("http");
 const fetch = require("node-fetch");
 
 const TOKEN = process.env.BOT_TOKEN;
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_KEY = process.env.GEMINI_API_KEY; // Render'dan çekecek
 
 // HTTP sunucu
 const PORT = process.env.PORT || 10000;
@@ -20,15 +20,10 @@ const client = new Client({
   ]
 });
 
-// Gemini AI sorgulama - DOĞRU model adlarıyla
+// GÜNCEL Gemini sorgulama (gemini-2.0-flash ile)
 async function geminiSor(prompt) {
-  // ÇALIŞAN model adları (gemini-pro ÖLDÜ)
-  // Seçenek 1: gemini-1.5-flash (hızlı, önerilen)
-  // Seçenek 2: gemini-1.5-pro (daha güçlü)
-  // Seçenek 3: gemini-2.0-flash (en yeni)
-  
-  const model = "gemini-1.5-flash"; // Bu çalışıyor!
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`;
+  // ÇALIŞAN model - gemini-2.0-flash
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
   
   const response = await fetch(url, {
     method: "POST",
@@ -63,7 +58,7 @@ client.on("ready", () => {
   console.log(`✅ ${client.user?.username} hazır!`);
   console.log(`📊 ${client.guilds.size} sunucu`);
   console.log(`🤖 AI Bot Aktif | by DRK`);
-  testAPI(); // Başlangıçta test et
+  testAPI();
 });
 
 client.on("messageCreate", async (message) => {
@@ -74,7 +69,6 @@ client.on("messageCreate", async (message) => {
   const cmd = args.shift().toLowerCase();
   const soru = args.join(" ");
 
-  // YAPAY ZEKA SORU
   if (cmd === "ai" || cmd === "sor") {
     if (!soru) {
       return message.reply("❌ **Soru yazmalısın!** `!ai <sorun>`\n📍 by DRK");
@@ -92,7 +86,7 @@ client.on("messageCreate", async (message) => {
           { name: "❓ Soru", value: `\`\`\`${soru.slice(0, 500)}\`\`\``, inline: false },
           { name: "💬 Cevap", value: `\`\`\`${cevap.slice(0, 1500)}\`\`\``, inline: false }
         )
-        .setFooter({ text: "Gemini 1.5 Flash • by DRK" })
+        .setFooter({ text: "Gemini 2.0 Flash • by DRK" })
         .setTimestamp();
       
       await bekliyor.edit({ content: null, embeds: [embed] });
@@ -122,7 +116,7 @@ client.on("messageCreate", async (message) => {
   if (cmd === "aiyardim" || cmd === "aihelp") {
     const embed = new EmbedBuilder()
       .setTitle("🤖 AI Bot Komutları")
-      .setDescription("Gemini 1.5 Flash ile güçlendirilmiş yapay zeka botu")
+      .setDescription("Gemini 2.0 Flash ile güçlendirilmiş yapay zeka botu")
       .setColor(Colors.Purple)
       .addFields(
         { name: "❓ !ai <soru>", value: "Yapay zekaya soru sor", inline: true },
@@ -132,7 +126,7 @@ client.on("messageCreate", async (message) => {
         { name: "🌐 !cevir <dil> <metin>", value: "Metni çevir", inline: true },
         { name: "💡 !fikir <konu>", value: "Fikir üret", inline: true }
       )
-      .setFooter({ text: "AI Bot • Gemini 1.5 Flash • by DRK" })
+      .setFooter({ text: "AI Bot • Gemini 2.0 Flash • by DRK" })
       .setTimestamp();
     
     await message.reply({ embeds: [embed] });
