@@ -1,13 +1,12 @@
 {
-  "name": "aibot",
+  "name": "jubbio-ai-bot",
   "version": "1.0.0",
-  "description": "Gemini Pro AI Bot - Jubbio",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "@jubbio/core": "latest",
-    "openai": "^4.0.0"
+    "openai": "^4.20.0"
   }
 }
