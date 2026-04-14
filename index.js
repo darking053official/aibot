@@ -3,12 +3,12 @@ const http = require("http");
 const OpenAI = require("openai");
 
 const TOKEN = process.env.BOT_TOKEN;
-const API_KEY = process.env.LLMAPI_KEY || process.env.OPENAI_API_KEY;
+const CEREBRAS_API_KEY = process.env.CEREBRAS_API_KEY;
 
-// OpenAI client (LLMAPI.ai için)
+// Cerebras OpenAI uyumlu client
 const openai = new OpenAI({
-  apiKey: API_KEY,
-  baseURL: "https://api.llmapi.ai/v1",
+  apiKey: CEREBRAS_API_KEY,
+  baseURL: "https://api.cerebras.ai/v1", // Cerebras API endpoint'i [citation:2][citation:5]
 });
 
 // ─── HTTP SUNUCU (Render için) ─────────────────────────────────────
@@ -37,11 +37,13 @@ const client = new Client({
   intents: 3276799 // Tüm intent'ler
 });
 
-// ─── LLMAPI SORGULAMA ─────────────────────────────────────────────
-async function llmapiSor(prompt) {
+// ─── CEREBRAS SORGULAMA ─────────────────────────────────────────────
+async function cerebrasSor(prompt) {
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [{ role: "user", content: prompt }]
+    model: "llama3.1-8b", // Cerebras'ın ücretsiz modeli, 2,200 token/saniye hız [citation:1][citation:8]
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.7,
+    max_completion_tokens: 1024,
   });
   
   return response.choices[0].message.content || "Cevap alınamadı.";
@@ -49,12 +51,12 @@ async function llmapiSor(prompt) {
 
 // ─── TEST FONKSİYONU ──────────────────────────────────────────────
 async function testAPI() {
-  console.log("🔍 LLMAPI.ai test ediliyor...");
+  console.log("🔍 Cerebras API test ediliyor...");
   try {
-    const cevap = await llmapiSor("Merhaba!");
-    console.log("✅ API çalışıyor! Cevap:", cevap.substring(0, 50) + "...");
+    const cevap = await cerebrasSor("Merhaba!");
+    console.log("✅ Cerebras API çalışıyor! Cevap:", cevap.substring(0, 50) + "...");
   } catch (error) {
-    console.error("❌ API hatası:", error.message);
+    console.error("❌ Cerebras API hatası:", error.message);
   }
 }
 
@@ -63,7 +65,7 @@ client.on("ready", () => {
   console.log(`✅ ${client.user?.username} hazır!`);
   console.log(`📊 ${client.guilds.size} sunucu`);
   console.log(`🆔 Bot ID: ${client.user?.id}`);
-  console.log(`🤖 AI Bot Aktif | by DRK`);
+  console.log(`🤖 Cerebras AI Bot Aktif | by DRK`);
   testAPI();
 });
 
@@ -82,24 +84,24 @@ client.on("messageCreate", async (message) => {
       return message.reply("❌ **Soru yazmalısın!** `!ai <sorun>`\n📍 by DRK");
     }
     
-    const bekliyor = await message.reply("🤖 **Düşünüyorum...**");
+    const bekliyor = await message.reply("🤖 **Cerebras düşünüyor...**");
     
     try {
-      const cevap = await llmapiSor(soru);
+      const cevap = await cerebrasSor(soru);
       
       const embed = new EmbedBuilder()
-        .setTitle("🤖 Yapay Zeka")
+        .setTitle("🤖 Cerebras AI")
         .setColor(Colors.Purple)
         .addFields(
           { name: "❓ Soru", value: `\`\`\`${soru.slice(0, 500)}\`\`\``, inline: false },
           { name: "💬 Cevap", value: `\`\`\`${cevap.slice(0, 1500)}\`\`\``, inline: false }
         )
-        .setFooter({ text: "GPT-4o • by DRK" })
+        .setFooter({ text: "Cerebras Llama 3.1 8B • by DRK" })
         .setTimestamp();
       
       await bekliyor.edit({ content: null, embeds: [embed] });
     } catch (error) {
-      console.error("AI Hatası:", error.message);
+      console.error("Cerebras Hatası:", error.message);
       await bekliyor.edit(`❌ **Hata oluştu:** ${error.message}\n📍 by DRK`);
     }
   }
@@ -113,119 +115,8 @@ client.on("messageCreate", async (message) => {
     const bekliyor = await message.reply("💬 **Yazıyor...**");
     
     try {
-      const cevap = await llmapiSor(`Kısa ve samimi bir şekilde cevap ver: ${soru}`);
+      const cevap = await cerebrasSor(`Kısa ve samimi bir şekilde cevap ver: ${soru}`);
       await bekliyor.edit(`${cevap.slice(0, 1800)}\n📍 by DRK`);
-    } catch (error) {
-      await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
-    }
-  }
-
-  // YORUMLA
-  if (cmd === "yorumla") {
-    if (!soru) {
-      return message.reply("❌ **Yorumlanacak metin yaz!** `!yorumla <metin>`\n📍 by DRK");
-    }
-    
-    const bekliyor = await message.reply("🔍 **Yorumluyorum...**");
-    
-    try {
-      const cevap = await llmapiSor(`Şu metni detaylıca yorumla, analiz et: ${soru}`);
-      
-      const embed = new EmbedBuilder()
-        .setTitle("🔍 Metin Yorumlama")
-        .setColor(Colors.Blue)
-        .addFields(
-          { name: "📄 Metin", value: `\`\`\`${soru.slice(0, 300)}\`\`\``, inline: false },
-          { name: "💬 Yorum", value: `\`\`\`${cevap.slice(0, 1500)}\`\`\``, inline: false }
-        )
-        .setFooter({ text: "GPT-4o • by DRK" })
-        .setTimestamp();
-      
-      await bekliyor.edit({ content: null, embeds: [embed] });
-    } catch (error) {
-      await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
-    }
-  }
-
-  // ÖZETLE
-  if (cmd === "ozetle") {
-    if (!soru) {
-      return message.reply("❌ **Özetlenecek metin yaz!** `!ozetle <metin>`\n📍 by DRK");
-    }
-    
-    const bekliyor = await message.reply("📝 **Özetliyorum...**");
-    
-    try {
-      const cevap = await llmapiSor(`Şu metni kısa ve öz bir şekilde özetle: ${soru}`);
-      
-      const embed = new EmbedBuilder()
-        .setTitle("📝 Metin Özeti")
-        .setColor(Colors.Green)
-        .addFields(
-          { name: "📄 Orijinal", value: `\`\`\`${soru.slice(0, 300)}\`\`\``, inline: false },
-          { name: "✂️ Özet", value: `\`\`\`${cevap.slice(0, 1500)}\`\`\``, inline: false }
-        )
-        .setFooter({ text: "GPT-4o • by DRK" })
-        .setTimestamp();
-      
-      await bekliyor.edit({ content: null, embeds: [embed] });
-    } catch (error) {
-      await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
-    }
-  }
-
-  // ÇEVİRİ
-  if (cmd === "cevir") {
-    const dil = args[0];
-    const metin = args.slice(1).join(" ");
-    
-    if (!dil || !metin) {
-      return message.reply("❌ **Kullanım:** `!cevir <dil> <metin>`\nÖrnek: `!cevir İngilizce Merhaba dünya`\n📍 by DRK");
-    }
-    
-    const bekliyor = await message.reply("🌐 **Çeviriyorum...**");
-    
-    try {
-      const cevap = await llmapiSor(`Şu metni ${dil} diline çevir, sadece çeviriyi ver: ${metin}`);
-      
-      const embed = new EmbedBuilder()
-        .setTitle("🌐 Çeviri")
-        .setColor(Colors.Yellow)
-        .addFields(
-          { name: "📥 Orijinal", value: `\`\`\`${metin.slice(0, 500)}\`\`\``, inline: false },
-          { name: `📤 ${dil}`, value: `\`\`\`${cevap.slice(0, 1500)}\`\`\``, inline: false }
-        )
-        .setFooter({ text: "GPT-4o • by DRK" })
-        .setTimestamp();
-      
-      await bekliyor.edit({ content: null, embeds: [embed] });
-    } catch (error) {
-      await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
-    }
-  }
-
-  // FİKİR
-  if (cmd === "fikir") {
-    if (!soru) {
-      return message.reply("❌ **Konu yaz!** `!fikir <konu>`\nÖrnek: `!fikir mobil uygulama`\n📍 by DRK");
-    }
-    
-    const bekliyor = await message.reply("💡 **Fikir üretiyorum...**");
-    
-    try {
-      const cevap = await llmapiSor(`"${soru}" konusunda yaratıcı fikirler, öneriler ve ilham verici düşünceler paylaş:`);
-      
-      const embed = new EmbedBuilder()
-        .setTitle("💡 Yaratıcı Fikirler")
-        .setColor(Colors.Orange)
-        .addFields(
-          { name: "🎯 Konu", value: `\`\`\`${soru.slice(0, 300)}\`\`\``, inline: false },
-          { name: "✨ Fikirler", value: `\`\`\`${cevap.slice(0, 1500)}\`\`\``, inline: false }
-        )
-        .setFooter({ text: "GPT-4o • by DRK" })
-        .setTimestamp();
-      
-      await bekliyor.edit({ content: null, embeds: [embed] });
     } catch (error) {
       await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
     }
@@ -234,18 +125,18 @@ client.on("messageCreate", async (message) => {
   // YARDIM
   if (cmd === "aiyardim" || cmd === "aihelp") {
     const embed = new EmbedBuilder()
-      .setTitle("🤖 AI Bot Komutları")
-      .setDescription("GPT-4o ile güçlendirilmiş yapay zeka botu")
+      .setTitle("🤖 Cerebras AI Bot Komutları")
+      .setDescription("⚡ Cerebras Inference (Dünyanın en hızlı AI çipi) ile güçlendirilmiştir [citation:1]")
       .setColor(Colors.Purple)
       .addFields(
-        { name: "❓ !ai <soru>", value: "Yapay zekaya soru sor", inline: true },
+        { name: "❓ !ai <soru>", value: "Cerebras'a soru sor", inline: true },
         { name: "💬 !sohbet <mesaj>", value: "Sohbet et", inline: true },
         { name: "🔍 !yorumla <metin>", value: "Metni yorumla", inline: true },
         { name: "📄 !ozetle <metin>", value: "Metni özetle", inline: true },
         { name: "🌐 !cevir <dil> <metin>", value: "Metni çevir", inline: true },
         { name: "💡 !fikir <konu>", value: "Fikir üret", inline: true }
       )
-      .setFooter({ text: "AI Bot • GPT-4o • by DRK" })
+      .setFooter({ text: "Cerebras AI • Llama 3.1 8B • by DRK" })
       .setTimestamp();
     
     await message.reply({ embeds: [embed] });
@@ -257,5 +148,5 @@ client.on("error", (err) => console.error("❌ Client error:", err.message));
 process.on("unhandledRejection", (err) => console.error("❌ Unhandled rejection:", err));
 
 // ─── BOTU BAŞLAT ──────────────────────────────────────────────────
-console.log("🚀 AI Bot başlatılıyor...");
+console.log("🚀 Cerebras AI Bot başlatılıyor...");
 client.login(TOKEN);
