@@ -14,7 +14,6 @@ const openai = new OpenAI({
 // HTTP sunucu - Render Free Web Service için GEREKLİ
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
-  // Render health check için basit yanıt
   res.writeHead(200, { "Content-Type": "text/plain" });
   res.end("OK");
 }).listen(PORT, () => {
@@ -26,7 +25,9 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent
-  ]
+  ],
+  gatewayUrl: "wss://realtime.jubbio.com/ws/bot",
+  apiUrl: "https://gateway.jubbio.com/v1"
 });
 
 // LLMAPI.ai sorgulama
@@ -49,6 +50,18 @@ async function testAPI() {
     console.error("❌ API hatası:", error.message);
   }
 }
+
+// Rate limit ve hata yönetimi
+client.on("error", (error) => {
+  console.error("⚠️ Bot hatası:", error.message);
+  if (error.message.includes("429")) {
+    console.log("⏳ Rate limit aşıldı, 60 saniye bekleniyor...");
+    setTimeout(() => {
+      console.log("🔄 Yeniden bağlanılıyor...");
+      client.login(TOKEN);
+    }, 60000);
+  }
+});
 
 client.on("ready", () => {
   console.log(`✅ ${client.user?.username} hazır!`);
