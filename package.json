@@ -9,6 +9,5 @@
   "dependencies": {
     "@jubbio/core": "latest",
     "openai": "^4.0.0"
-    "node-fetch": "^2.7.0"
   }
 }
