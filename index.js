@@ -1,22 +1,14 @@
 const { Client, GatewayIntentBits, EmbedBuilder, Colors } = require("@jubbio/core");
-const http = require("http");
 const OpenAI = require("openai");
 
 const TOKEN = process.env.BOT_TOKEN;
-const LLMAPI_KEY = process.env.LLMAPI_KEY; // Render'dan çekecek
+const API_KEY = process.env.LLMAPI_KEY || process.env.OPENAI_API_KEY;
 
 // OpenAI client (LLMAPI.ai için)
 const openai = new OpenAI({
-  apiKey: LLMAPI_KEY,
+  apiKey: API_KEY,
   baseURL: "https://api.llmapi.ai/v1",
 });
-
-// HTTP sunucu
-const PORT = process.env.PORT || 10000;
-http.createServer((req, res) => {
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ status: "online", bot: "AIBot" }));
-}).listen(PORT);
 
 const client = new Client({
   intents: [
@@ -26,7 +18,7 @@ const client = new Client({
   ]
 });
 
-// LLMAPI.ai sorgulama (gpt-4o ile)
+// LLMAPI.ai sorgulama
 async function llmapiSor(prompt) {
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -40,8 +32,8 @@ async function llmapiSor(prompt) {
 async function testAPI() {
   console.log("🔍 LLMAPI.ai test ediliyor...");
   try {
-    const cevap = await llmapiSor("Merhaba! Nasılsın?");
-    console.log("✅ API çalışıyor! Cevap:", cevap);
+    const cevap = await llmapiSor("Merhaba!");
+    console.log("✅ API çalışıyor! Cevap:", cevap.substring(0, 50) + "...");
   } catch (error) {
     console.error("❌ API hatası:", error.message);
   }
@@ -62,6 +54,7 @@ client.on("messageCreate", async (message) => {
   const cmd = args.shift().toLowerCase();
   const soru = args.join(" ");
 
+  // AI SORU
   if (cmd === "ai" || cmd === "sor") {
     if (!soru) {
       return message.reply("❌ **Soru yazmalısın!** `!ai <sorun>`\n📍 by DRK");
