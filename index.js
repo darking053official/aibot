@@ -37,14 +37,20 @@ const client = new Client({
   intents: 3276799 // Tüm intent'ler
 });
 
-// ─── GÜVENLİ MESAJ GÖNDERME (Edit Hatasını Engellemek İçin) ────────
+// ─── GÜVENLİ MESAJ GÖNDERME (CHANNEL HATASI DÜZELTİLDİ) ────────────
 async function guvenliGonder(hedefMesaj, embedIcerik) {
   try {
     await hedefMesaj.edit({ content: null, embeds: [embedIcerik] });
   } catch (editError) {
-    console.log("⚠️ Edit başarısız, yeni mesaj gönderiliyor:", editError.message);
-    await hedefMesaj.channel.send({ embeds: [embedIcerik] });
-    await hedefMesaj.delete().catch(() => {});
+    console.log("⚠️ Edit başarısız, yeni mesaj deneniyor:", editError.message);
+    try {
+      // Jubbio'da channelId var, channel yok - doğrudan message.reply kullanalım
+      await hedefMesaj.reply({ embeds: [embedIcerik] });
+      await hedefMesaj.delete().catch(() => {});
+    } catch (sendError) {
+      console.log("❌ Reply de başarısız:", sendError.message);
+      // Hiçbir şey yapma, en azından bot çökmez
+    }
   }
 }
 
@@ -52,9 +58,13 @@ async function guvenliYaziGonder(hedefMesaj, yazi) {
   try {
     await hedefMesaj.edit(yazi);
   } catch (editError) {
-    console.log("⚠️ Edit başarısız, yeni mesaj gönderiliyor:", editError.message);
-    await hedefMesaj.channel.send(yazi);
-    await hedefMesaj.delete().catch(() => {});
+    console.log("⚠️ Edit başarısız, yeni mesaj deneniyor:", editError.message);
+    try {
+      await hedefMesaj.reply(yazi);
+      await hedefMesaj.delete().catch(() => {});
+    } catch (sendError) {
+      console.log("❌ Reply de başarısız:", sendError.message);
+    }
   }
 }
 
