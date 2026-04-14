@@ -1,4 +1,5 @@
 const { Client, GatewayIntentBits, EmbedBuilder, Colors } = require("@jubbio/core");
+const http = require("http");
 const OpenAI = require("openai");
 
 const TOKEN = process.env.BOT_TOKEN;
@@ -8,6 +9,16 @@ const API_KEY = process.env.LLMAPI_KEY || process.env.OPENAI_API_KEY;
 const openai = new OpenAI({
   apiKey: API_KEY,
   baseURL: "https://api.llmapi.ai/v1",
+});
+
+// HTTP sunucu - Render Free Web Service için GEREKLİ
+const PORT = process.env.PORT || 10000;
+http.createServer((req, res) => {
+  // Render health check için basit yanıt
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.end("OK");
+}).listen(PORT, () => {
+  console.log(`🌐 HTTP sunucu ${PORT} portunda çalışıyor`);
 });
 
 const client = new Client({
