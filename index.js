@@ -37,6 +37,27 @@ const client = new Client({
   intents: 3276799 // Tüm intent'ler
 });
 
+// ─── GÜVENLİ MESAJ GÖNDERME (Edit Hatasını Engellemek İçin) ────────
+async function guvenliGonder(hedefMesaj, embedIcerik) {
+  try {
+    await hedefMesaj.edit({ content: null, embeds: [embedIcerik] });
+  } catch (editError) {
+    console.log("⚠️ Edit başarısız, yeni mesaj gönderiliyor:", editError.message);
+    await hedefMesaj.channel.send({ embeds: [embedIcerik] });
+    await hedefMesaj.delete().catch(() => {});
+  }
+}
+
+async function guvenliYaziGonder(hedefMesaj, yazi) {
+  try {
+    await hedefMesaj.edit(yazi);
+  } catch (editError) {
+    console.log("⚠️ Edit başarısız, yeni mesaj gönderiliyor:", editError.message);
+    await hedefMesaj.channel.send(yazi);
+    await hedefMesaj.delete().catch(() => {});
+  }
+}
+
 // ─── CEREBRAS SORGULAMA (TÜRKÇE ZORUNLU) ─────────────────────────────
 async function cerebrasSor(prompt) {
   const response = await openai.chat.completions.create({
@@ -108,10 +129,10 @@ client.on("messageCreate", async (message) => {
         .setFooter({ text: "Cerebras Llama 3.1 8B • by DRK" })
         .setTimestamp();
       
-      await bekliyor.edit({ content: null, embeds: [embed] });
+      await guvenliGonder(bekliyor, embed);
     } catch (error) {
       console.error("AI Hatası:", error.message);
-      await bekliyor.edit(`❌ **Hata oluştu:** ${error.message}\n📍 by DRK`);
+      await guvenliYaziGonder(bekliyor, `❌ **Hata oluştu:** ${error.message}\n📍 by DRK`);
     }
   }
 
@@ -125,9 +146,9 @@ client.on("messageCreate", async (message) => {
     
     try {
       const cevap = await cerebrasSor(`Kısa ve samimi bir şekilde cevap ver: ${soru}`);
-      await bekliyor.edit(`${cevap.slice(0, 1800)}\n━━━━━━━━━━━━━━━━━━\n📍 by DRK`);
+      await guvenliYaziGonder(bekliyor, `${cevap.slice(0, 1800)}\n━━━━━━━━━━━━━━━━━━\n📍 by DRK`);
     } catch (error) {
-      await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
+      await guvenliYaziGonder(bekliyor, `❌ **Hata:** ${error.message}\n📍 by DRK`);
     }
   }
 
@@ -152,9 +173,9 @@ client.on("messageCreate", async (message) => {
         .setFooter({ text: "Cerebras Llama 3.1 8B • by DRK" })
         .setTimestamp();
       
-      await bekliyor.edit({ content: null, embeds: [embed] });
+      await guvenliGonder(bekliyor, embed);
     } catch (error) {
-      await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
+      await guvenliYaziGonder(bekliyor, `❌ **Hata:** ${error.message}\n📍 by DRK`);
     }
   }
 
@@ -179,9 +200,9 @@ client.on("messageCreate", async (message) => {
         .setFooter({ text: "Cerebras Llama 3.1 8B • by DRK" })
         .setTimestamp();
       
-      await bekliyor.edit({ content: null, embeds: [embed] });
+      await guvenliGonder(bekliyor, embed);
     } catch (error) {
-      await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
+      await guvenliYaziGonder(bekliyor, `❌ **Hata:** ${error.message}\n📍 by DRK`);
     }
   }
 
@@ -209,9 +230,9 @@ client.on("messageCreate", async (message) => {
         .setFooter({ text: "Cerebras Llama 3.1 8B • by DRK" })
         .setTimestamp();
       
-      await bekliyor.edit({ content: null, embeds: [embed] });
+      await guvenliGonder(bekliyor, embed);
     } catch (error) {
-      await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
+      await guvenliYaziGonder(bekliyor, `❌ **Hata:** ${error.message}\n📍 by DRK`);
     }
   }
 
@@ -236,10 +257,18 @@ client.on("messageCreate", async (message) => {
         .setFooter({ text: "Cerebras Llama 3.1 8B • by DRK" })
         .setTimestamp();
       
-      await bekliyor.edit({ content: null, embeds: [embed] });
+      await guvenliGonder(bekliyor, embed);
     } catch (error) {
-      await bekliyor.edit(`❌ **Hata:** ${error.message}\n📍 by DRK`);
+      await guvenliYaziGonder(bekliyor, `❌ **Hata:** ${error.message}\n📍 by DRK`);
     }
+  }
+
+  // ─── PING ─────────────────────────────────────────────────────────
+  if (cmd === "ping") {
+    const start = Date.now();
+    const m = await message.reply("🏓 Ölçülüyor...");
+    const ping = Date.now() - start;
+    await guvenliYaziGonder(m, `🏓 Pong! **${ping}ms**\n📍 by DRK`);
   }
 
   // ─── YARDIM ───────────────────────────────────────────────────────
@@ -254,7 +283,8 @@ client.on("messageCreate", async (message) => {
         { name: "🔍 !yorumla <metin>", value: "Metni analiz et, yorumla", inline: true },
         { name: "📄 !ozetle <metin>", value: "Uzun metni özetle", inline: true },
         { name: "🌐 !cevir <dil> <metin>", value: "Metni başka dile çevir", inline: true },
-        { name: "💡 !fikir <konu>", value: "Konu hakkında fikir üret", inline: true }
+        { name: "💡 !fikir <konu>", value: "Konu hakkında fikir üret", inline: true },
+        { name: "🏓 !ping", value: "Bot gecikmesini göster", inline: true }
       )
       .setFooter({ text: "Cerebras AI • Llama 3.1 8B • by DRK" })
       .setTimestamp();
