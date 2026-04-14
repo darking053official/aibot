@@ -11,26 +11,33 @@ const openai = new OpenAI({
   baseURL: "https://api.llmapi.ai/v1",
 });
 
-// HTTP sunucu - Render Free Web Service için GEREKLİ
+// ─── HTTP SUNUCU (Render için) ─────────────────────────────────────
 const PORT = process.env.PORT || 10000;
-http.createServer((req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("OK");
-}).listen(PORT, () => {
+const server = http.createServer((req, res) => {
+  if (req.url === "/") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ 
+      status: "online", 
+      bot: client.user?.username || "AIBot",
+      uptime: process.uptime(),
+      guilds: client.guilds?.size || 0
+    }));
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
+});
+
+server.listen(PORT, () => {
   console.log(`🌐 HTTP sunucu ${PORT} portunda çalışıyor`);
 });
 
+// ─── CLIENT ───────────────────────────────────────────────────────
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ],
-  gatewayUrl: "wss://realtime.jubbio.com/ws/bot",
-  apiUrl: "https://gateway.jubbio.com/v1"
+  intents: 3276799 // Tüm intent'ler
 });
 
-// LLMAPI.ai sorgulama
+// ─── LLMAPI SORGULAMA ─────────────────────────────────────────────
 async function llmapiSor(prompt) {
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -40,7 +47,7 @@ async function llmapiSor(prompt) {
   return response.choices[0].message.content || "Cevap alınamadı.";
 }
 
-// Test fonksiyonu
+// ─── TEST FONKSİYONU ──────────────────────────────────────────────
 async function testAPI() {
   console.log("🔍 LLMAPI.ai test ediliyor...");
   try {
@@ -51,25 +58,16 @@ async function testAPI() {
   }
 }
 
-// Rate limit ve hata yönetimi
-client.on("error", (error) => {
-  console.error("⚠️ Bot hatası:", error.message);
-  if (error.message.includes("429")) {
-    console.log("⏳ Rate limit aşıldı, 60 saniye bekleniyor...");
-    setTimeout(() => {
-      console.log("🔄 Yeniden bağlanılıyor...");
-      client.login(TOKEN);
-    }, 60000);
-  }
-});
-
+// ─── READY OLAYI ──────────────────────────────────────────────────
 client.on("ready", () => {
   console.log(`✅ ${client.user?.username} hazır!`);
-  console.log(`📊 ${client.guilds.cache.size} sunucu`);
+  console.log(`📊 ${client.guilds.size} sunucu`);
+  console.log(`🆔 Bot ID: ${client.user?.id}`);
   console.log(`🤖 AI Bot Aktif | by DRK`);
   testAPI();
 });
 
+// ─── MESAJ OLAYI ──────────────────────────────────────────────────
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   if (!message.content.startsWith("!")) return;
@@ -254,4 +252,10 @@ client.on("messageCreate", async (message) => {
   }
 });
 
+// ─── HATA YAKALAMA ────────────────────────────────────────────────
+client.on("error", (err) => console.error("❌ Client error:", err.message));
+process.on("unhandledRejection", (err) => console.error("❌ Unhandled rejection:", err));
+
+// ─── BOTU BAŞLAT ──────────────────────────────────────────────────
+console.log("🚀 AI Bot başlatılıyor...");
 client.login(TOKEN);
